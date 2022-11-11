@@ -1,0 +1,32 @@
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: nginx-azurefile
+spec:
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+  nodeSelector:
+    "kubernetes.io/os": linux
+  containers:
+    - image: acheng.azurecr.io/capsh:1.5
+      name: nginx-azurefile
+      securityContext:
+        allowPrivilegeEscalation: true
+        capabilities:
+          add: ["CHOWN","FOWNER","SYS_RESOURCES"]
+      command:
+        - "/bin/bash"
+        - "-c"
+        - set -euo pipefail; while true; do echo $(date) >> /mnt/azurefile/outfile; sleep 10; done
+      volumeMounts:
+        - name: persistent-storage
+          mountPath: "/mnt/azurefile"
+  imagePullSecrets:
+    - name: acr-secret
+  volumes:
+    - name: persistent-storage
+      persistentVolumeClaim:
+        claimName: pvc-azurefile2
